@@ -10,6 +10,8 @@ import librosa
 import numpy as np
 import soundfile as sf
 import torch
+import zipfile
+from shutil import make_archive
 
 from encoder import inference as encoder
 from encoder.params_model import model_embedding_size as speaker_embedding_size
@@ -17,6 +19,11 @@ from synthesizer.inference import Synthesizer
 from utils.argutils import print_args
 from utils.default_models import ensure_default_models
 from vocoder import inference as vocoder
+
+from PIL import Image
+image = Image.open('logo.jpg')
+
+st.image(image)
 
 st.title('PPP Project')
 
@@ -93,17 +100,19 @@ print("All test passed! You can now synthesize speech.\n\n")
 # vocoder.load_model(voc_model_fpath)
 
 # model_load_state.text("Loaded pretrained models!")
-
+st.text("Models Loaded...")
 st.header("1. Record your own voice")
 
 filename = st.text_input("Choose a filename: ")
+
+duration = st.select_slider('Enter the Duration of the Recording',options=[5,10,15,20,25,30])
 
 if st.button(f"Click to Record"):
     if filename == "":
         st.warning("Choose a filename.")
     else:
         record_state = st.text("Recording...")
-        duration =  10 # seconds
+        # duration =  10 # seconds
         fs = 48000
         myrecording = record(duration, fs)
         record_state.text(f"Saving sample as {filename}.mp3")
@@ -117,8 +126,17 @@ if st.button(f"Click to Record"):
 
         fig = create_spectrogram(path_myrecording)
         st.pyplot(fig)
+st.header("1. Or Upload Your Own Audio File in .mp3 Format")
 
-"## 2. Choose an audio record"
+audio_files_up = st.file_uploader("Upload Audio", type=["mp3"])
+if audio_files_up is not None:
+    file_details = {"filename":audio_files_up.name, "filetype":audio_files_up.type,"filesize":audio_files_up.size}
+    st.write(file_details)
+    with open(os.path.join("samples",audio_files_up.name),"wb") as f:
+        f.write(audio_files_up.getbuffer())
+
+
+"## 2. Choose an audio recording"
 
 audio_folder = "samples"
 filenames = glob.glob(os.path.join(audio_folder, "*.mp3"))
@@ -176,8 +194,19 @@ if st.button("Click to synthesize"):
         st.success("Done!")
 
     # Save it on the disk
-    filename = "output_%02d.wav" % num_generated
+    filename = "outputs/output_%02d.wav" % num_generated
     sf.write(filename, generated_wav.astype(np.float32), synthesizer.sample_rate)
     num_generated += 1
     synthesize_state.text("\nSaved output as %s\n\n" % filename)
     st.audio(read_audio(filename))
+
+"## 4. Download Zip File for the Outputs"
+
+make_archive( 'the_outputs', 'zip', root_dir="outputs")
+with open("the_outputs.zip", "rb") as file:
+     btn = st.download_button(
+             label="Download Zip File",
+             data=file,
+             file_name="the_outputs.zip",
+             mime="None"
+           )
