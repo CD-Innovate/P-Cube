@@ -5,7 +5,7 @@ from helper import draw_embed, create_spectrogram, read_audio, record, save_reco
 import argparse
 import os
 from pathlib import Path
-
+import time
 import librosa
 import numpy as np
 import soundfile as sf
@@ -27,7 +27,7 @@ st.image(image)
 
 st.title('PPP Project')
 
-model_load_state = st.text("Loading pretrained models...")
+# model_load_state = st.text("Loading pretrained models...")
 
 seed = 42
 low_mem = False
@@ -100,8 +100,8 @@ print("All test passed! You can now synthesize speech.\n\n")
 # vocoder.load_model(voc_model_fpath)
 
 # model_load_state.text("Loaded pretrained models!")
-st.text("Models Loaded...")
-st.header("1. Record your own voice")
+# st.text("Models Loaded...")
+"### Record your own voice"
 
 filename = st.text_input("Choose a filename: ")
 
@@ -126,7 +126,8 @@ if st.button(f"Click to Record"):
 
         fig = create_spectrogram(path_myrecording)
         st.pyplot(fig)
-st.header("1. Or Upload Your Own Audio File in .mp3 Format")
+
+"### Upload Your Audio File"
 
 audio_files_up = st.file_uploader("Upload Audio", type=["mp3"])
 if audio_files_up is not None:
@@ -136,7 +137,7 @@ if audio_files_up is not None:
         f.write(audio_files_up.getbuffer())
 
 
-"## 2. Choose an audio recording"
+"### Select the Voice"
 
 audio_folder = "samples"
 filenames = glob.glob(os.path.join(audio_folder, "*.mp3"))
@@ -153,21 +154,20 @@ if selected_filename is not None:
     st.audio(read_audio(in_fpath))
 
     # if st.sidebar.checkbox("Do you want to change your embedding?"):
-    if False:
-        height = int(np.sqrt(len(embed)))
-        shape = (height, -1)
-        matrix_embed = np.round(embed, 2).reshape(shape)
-        matrix_embed = [list(row) for row in matrix_embed]
-        a = st.text_area("Change your embedding:", value=str(matrix_embed).replace("],", "],\n"))
+    # if st.sidebar.checkbox("Do you want to change your embedding?"):
+    #     height = int(np.sqrt(len(embed)))
+    #     shape = (height, -1)
+    #     matrix_embed = np.round(embed, 2).reshape(shape)
+    #     matrix_embed = [list(row) for row in matrix_embed]
+    #     a = st.text_area("Change your embedding:", value=str(matrix_embed).replace("],", "],\n"))
 
-        matrix = [[float(x) for x in row.strip("[] \n").split(",")] for row in a.split("],")]
-        embed = np.array(matrix).flatten()
+    #     matrix = [[float(x) for x in row.strip("[] \n").split(",")] for row in a.split("],")]
+    #     embed = np.array(matrix).flatten()
 
     # fig = draw_embed(embed, "myembedding", None)
     # st.pyplot(fig)
 
-
-"## 3. Synthesize text."
+"### Synthesize text."
 text = st.text_input("Write a sentence (+-20 words) to be synthesized:")
 
 
@@ -195,17 +195,28 @@ if st.button("Click to synthesize"):
         st.success("Done!")
 
     # Save it on the disk
-    filename = "outputs/output_%02d.wav" % num_generated
+    timestr = time.strftime("%m_%d--%H_%M_%S")
+    filename="outputs/"+selected_filename[8:]
+    filename=filename[:-4]+"_"+timestr+".wav"
+    # filename = output_%02d.wav" % num_generated
     sf.write(filename, generated_wav.astype(np.float32), synthesizer.sample_rate)
     num_generated += 1
     synthesize_state.text("\nSaved output as %s\n\n" % filename)
     st.audio(read_audio(filename))
 
-"## 4. Download Zip File for the Outputs"
+    with open(filename, "rb") as file:
+        btn1 = st.download_button(
+                 label="Download",
+                 data=file,
+                 file_name=filename,
+                 mime="None"
+               )
+
+"### Zip File for the Outputs"
 
 make_archive( 'the_outputs', 'zip', root_dir="outputs")
 with open("the_outputs.zip", "rb") as file:
-     btn = st.download_button(
+     btn2 = st.download_button(
              label="Download Zip File",
              data=file,
              file_name="the_outputs.zip",
