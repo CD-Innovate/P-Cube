@@ -148,11 +148,12 @@ if selected_filename is not None:
     original_wav, sampling_rate = librosa.load(str(in_fpath))
     preprocessed_wav = encoder.preprocess_wav(original_wav, sampling_rate)
     embed = encoder.embed_utterance(preprocessed_wav)
-    st.success("Created the embedding")
+    # st.success("Created the embedding")
 
     st.audio(read_audio(in_fpath))
 
-    if st.sidebar.checkbox("Do you want to change your embedding?"):
+    # if st.sidebar.checkbox("Do you want to change your embedding?"):
+    if False:
         height = int(np.sqrt(len(embed)))
         shape = (height, -1)
         matrix_embed = np.round(embed, 2).reshape(shape)
@@ -162,8 +163,8 @@ if selected_filename is not None:
         matrix = [[float(x) for x in row.strip("[] \n").split(",")] for row in a.split("],")]
         embed = np.array(matrix).flatten()
 
-    fig = draw_embed(embed, "myembedding", None)
-    st.pyplot(fig)
+    # fig = draw_embed(embed, "myembedding", None)
+    # st.pyplot(fig)
 
 
 "## 3. Synthesize text."
